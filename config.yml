@@ -1,0 +1,54 @@
+network:
+    name: 'transformer'
+    device: 'cuda'
+    use_amp: False
+    test_model: '16_05_2024_16_30_sl_50_CUDA.pth'
+
+    transformer:
+        name: 'transformer'
+        n_head: 12
+        n_embd: 768
+        n_enc_layer: 12
+        embd_drop: 0.5
+        resid_drop: 0.5
+        att_drop: 0.5
+        vocab_size: 11
+
+    optimizer:
+        name: 'adam'
+        beta1: 0.9
+        beta2: 0.99
+        lr: 1e-3
+
+    loss:
+        name: 'l1'
+
+    accuracy:
+        epsilon: 0.01
+
+
+dataset:
+    label: sl
+    EMA: 200
+    normalization: True
+    vers: 1
+    data_file_name: 'data_v2'
+    candle_count: 50
+
+    train_loader:
+        epochs: 50
+        num_workers: 0
+        batch_size: 25
+        shuffle: True
+        drop_last: True
+        start: 200
+        stop: 450
+
+    test_loader:
+        num_workers: 0
+        batch_size: 1
+        shuffle: False
+        drop_last: False
+        start: 400
+        stop: 500
+
