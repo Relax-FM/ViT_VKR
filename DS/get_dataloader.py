@@ -52,6 +52,7 @@ class Dataloader():
                             lbl=get_label(self.dataset_options.get('label'), False if test else True))  # Получаем два списка
         # В первом списке - входные данные, во втором - label данные
         # High, Low, EMA, Assets [2, [200, [4, 50]]]          2 - predict label      200 - размер ДС      4 - кол-во параметров у свечи              50 - свечей
+        # [i, [4, 50]]
         ds = DataSet(pdl.batches)
 
         loader = torch.utils.data.DataLoader(

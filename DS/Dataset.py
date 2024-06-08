@@ -13,9 +13,8 @@ class DataSet(Dataset):
 
     def __getitem__(self, index):
         # label так и оставляем, а вот info надо исправить
-        info = torch.tensor(self.data[0][index])
-        info = info.view(1, info.shape[0], info.shape[1])
-        label = torch.tensor(self.data[1][index])
+        info = torch.tensor(self.data[0][index])  # [i, [4, 50]]
+        label = torch.tensor(self.data[1][index])  # [i, 1]
         info = info.to(torch.float32)
         label = label.to(torch.float32)
         return {

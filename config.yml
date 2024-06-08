@@ -6,13 +6,14 @@ network:
 
     transformer:
         name: 'transformer'
-        n_head: 12
-        n_embd: 768
+        n_head: 4
+        n_embd: 4
         n_enc_layer: 12
-        embd_drop: 0.5
-        resid_drop: 0.5
-        att_drop: 0.5
-        vocab_size: 11
+        mlp_size: 256
+        embd_drop: 0
+        resid_drop: 0
+        att_drop: 0
+        n_classes: 1
 
     optimizer:
         name: 'adam'
@@ -29,14 +30,16 @@ network:
 
 dataset:
     label: sl
+    flag: False
     EMA: 200
     normalization: True
     vers: 1
     data_file_name: 'data_v2'
     candle_count: 50
+    patch_size: 50
 
     train_loader:
-        epochs: 50
+        epochs: 500
         num_workers: 0
         batch_size: 25
         shuffle: True

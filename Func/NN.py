@@ -26,9 +26,9 @@ class MultiheadSelfAttentionBlock(nn.Module):
 
     # 2. Initialize the class with hyperparameters from Table 1
     def __init__(self,
-                 embedding_dim: int = 768,  # Hidden size D from Table 1 for ViT-Base
-                 num_heads: int = 12,  # Heads from Table 1 for ViT-Base
-                 attn_dropout: float = 0):  # doesn't look like the paper uses any dropout in MSABlocks
+                 embedding_dim: int = 4,  # Hidden size D from Table 1 for ViT-Base
+                 num_heads: int = 10,  # Heads from Table 1 for ViT-Base
+                 attn_dropout: float = 0.1):  # doesn't look like the paper uses any dropout in MSABlocks
         super().__init__()
 
         # 3. Create the Norm layer (LN)
@@ -56,8 +56,8 @@ class MLPBlock(nn.Module):
 
     # 2. Initialize the class with hyperparameters from Table 1 and Table 3
     def __init__(self,
-                 embedding_dim: int = 768,  # Hidden Size D from Table 1 for ViT-Base
-                 mlp_size: int = 3072,  # MLP size from Table 1 for ViT-Base
+                 embedding_dim: int = 4,  # Hidden Size D from Table 1 for ViT-Base
+                 mlp_size: int = 128,  # MLP size from Table 1 for ViT-Base
                  dropout: float = 0.1):  # Dropout from Table 3 for ViT-Base
         super().__init__()
 
@@ -88,11 +88,11 @@ class TransformerEncoderBlock(nn.Module):
 
     # 2. Initialize the class with hyperparameters from Table 1 and Table 3
     def __init__(self,
-                 embedding_dim: int = 768,  # Hidden size D from Table 1 for ViT-Base
-                 num_heads: int = 12,  # Heads from Table 1 for ViT-Base
-                 mlp_size: int = 3072,  # MLP size from Table 1 for ViT-Base
+                 embedding_dim: int = 4,  # Hidden size D from Table 1 for ViT-Base
+                 num_heads: int = 10,  # Heads from Table 1 for ViT-Base
+                 mlp_size: int = 128,  # MLP size from Table 1 for ViT-Base
                  mlp_dropout: float = 0.1,  # Amount of dropout for dense layers from Table 3 for ViT-Base
-                 attn_dropout: float = 0):  # Amount of dropout for attention layers
+                 attn_dropout: float = 0.1):  # Amount of dropout for attention layers
         super().__init__()
 
         # 3. Create MSA block (equation 2)
@@ -120,42 +120,36 @@ class TransformerEncoderBlock(nn.Module):
 class ViT(nn.Module):
     """Creates a Vision Transformer architecture with ViT-Base hyperparameters by default."""
 
-    # 2. Initialize the class with hyperparameters from Table 1 and Table 3
+    # 2. Initialize the class with hyperparameters from
     def __init__(self,
-                 img_size: int = 224,  # Training resolution from Table 3 in ViT paper
-                 in_channels: int = 3,  # Number of channels in input image
-                 patch_size: int = 16,  # Patch size
-                 num_transformer_layers: int = 12,  # Layers from Table 1 for ViT-Base
-                 embedding_dim: int = 768,  # Hidden size D from Table 1 for ViT-Base
-                 mlp_size: int = 3072,  # MLP size from Table 1 for ViT-Base
-                 num_heads: int = 12,  # Heads from Table 1 for ViT-Base
-                 attn_dropout: float = 0,  # Dropout for attention projection
+                 window_size: int = 50,  # Training resolution from ViT paper
+                 patch_size: int = 50,  # Patch size
+                 num_transformer_layers: int = 6,  # Layers from ViT-Base
+                 embedding_dim: int = 4,  # Hidden size D from ViT-Base
+                 mlp_size: int = 128,  # MLP size from ViT-Base
+                 num_heads: int = 10,  # Heads from ViT-Base
+                 attn_dropout: float = 0.1,  # Dropout for attention projection
                  mlp_dropout: float = 0.1,  # Dropout for dense/MLP layers
                  embedding_dropout: float = 0.1,  # Dropout for patch and position embeddings
-                 num_classes: int = 1000):  # Default for ImageNet but can customize this
+                 num_classes: int = 1):  # Default for ImageNet but can customize this
         super().__init__()  # don't forget the super().__init__()!
 
         # 3. Make the image size is divisble by the patch size
-        assert img_size % patch_size == 0, f"Image size must be divisible by patch size, image size: {img_size}, patch size: {patch_size}."
+        assert window_size % patch_size == 0, f"window size must be divisible by patch size, window size: {window_size}, patch size: {patch_size}."
 
-        # 4. Calculate number of patches (height * width/patch^2)
-        self.num_patches = (img_size * img_size) // patch_size ** 2
+        # # 4. Calculate number of patches (height * width/patch^2)
+        # self.num_patches = window_size // patch_size
 
         # 5. Create learnable class embedding (needs to go at front of sequence of patch embeddings)
         self.class_embedding = nn.Parameter(data=torch.randn(1, 1, embedding_dim),
                                             requires_grad=True)
 
         # 6. Create learnable position embedding
-        self.position_embedding = nn.Parameter(data=torch.randn(1, self.num_patches + 1, embedding_dim),
+        self.position_embedding = nn.Parameter(data=torch.randn(1, patch_size + 1, embedding_dim),
                                                requires_grad=True)
 
         # 7. Create embedding dropout value
         self.embedding_dropout = nn.Dropout(p=embedding_dropout)
-
-        # 8. Create patch embedding layer
-        self.patch_embedding = PatchEmbedding(in_channels=in_channels,
-                                              patch_size=patch_size,
-                                              embedding_dim=embedding_dim)
 
         # 9. Create Transformer Encoder blocks (we can stack Transformer Encoder blocks using nn.Sequential())
         # Note: The "*" means "all"
@@ -178,11 +172,7 @@ class ViT(nn.Module):
         batch_size = x.shape[0]
 
         # 13. Create class token embedding and expand it to match the batch size (equation 1)
-        class_token = self.class_embedding.expand(batch_size, -1,
-                                                  -1)  # "-1" means to infer the dimension (try this line on its own)
-
-        # 14. Create patch embedding (equation 1)
-        x = self.patch_embedding(x)
+        class_token = self.class_embedding.expand(batch_size, -1, -1)  # "-1" means to infer the dimension (try this line on its own)
 
         # 15. Concat class embedding and patch embedding (equation 1)
         x = torch.cat((class_token, x), dim=1)

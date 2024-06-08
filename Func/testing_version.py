@@ -11,8 +11,8 @@ from DS.get_dataloader import Dataloader
 from Func.Functions import *
 
 
-def feedforward_test(CNNet, loss_fn, epsilon, train_epochs, file_name):
-    CNNet.cpu()
+def feedforward_test(model, loss_fn, epsilon, train_epochs, file_name):
+    model.cpu()
     test_loader = Dataloader().get_dataloader(test=True)
     prediction_list = []
     label_list = []
@@ -26,7 +26,7 @@ def feedforward_test(CNNet, loss_fn, epsilon, train_epochs, file_name):
         with torch.no_grad():
             info, label = sample['info'], sample['label']
 
-            pred = CNNet(info)
+            pred = model(info)
 
             loss = loss_fn(pred, label)
             loss_item = loss.item()
@@ -61,7 +61,7 @@ def feedforward_test(CNNet, loss_fn, epsilon, train_epochs, file_name):
     ax.set_title(f'Тест - {train_epochs} эпох', fontsize=20)
     ax.legend()
     ax.grid(True)
-    plt.savefig(f'results/photo/no_additional/test/{file_name.replace(".pth", ".png")}')
+    plt.savefig(f'results/photo/test/{file_name.replace(".pth", ".png")}')
     # plt.show()
 
 

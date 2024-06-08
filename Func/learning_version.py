@@ -22,8 +22,8 @@ from Func.Functions import *
 from Func.testing_version import *
 
 
-def feedforward(epochs: int, train_loader, device: str, optimizer, use_amp: bool, CNNet, loss_fn,
-                scaler, epsilon: float, batch_size: int, lbl_from_conf: str, flag = False):
+def feedforward(epochs: int, train_loader, device: str, optimizer, use_amp: bool, model, loss_fn,
+                scaler, epsilon: float, batch_size: int, lbl_from_conf: str, flag=False):
     """
 
     Функция выполняет роль прямого прогона обучения НС.\n
@@ -35,7 +35,7 @@ def feedforward(epochs: int, train_loader, device: str, optimizer, use_amp: bool
     :param device: На каком устройстве обучать ('cuda'/'cpu')
     :param optimizer: Функция оптимизации (adam/sgd)
     :param use_amp: Использовать сжатие вещественных типов данных (True/False)
-    :param CNNet: Модель сверточной нейронной сети
+    :param model: Модель сверточной нейронной сети
     :param loss_fn: Функция потерь (CEL/L1/MSE)
     :param scaler: Эт штука чет с градиентами делает
     :param epsilon: Эпсилон для метрики точности ответов НС
@@ -44,7 +44,7 @@ def feedforward(epochs: int, train_loader, device: str, optimizer, use_amp: bool
     :param flag: Делать вывод метрик обучения или нет
     :return: Имя файла, где храниться модель
     """
-    CNNet = CNNet.to(device)
+    model = model.to(device)
     max_acc = -1.0
 
     labels = []
@@ -71,7 +71,7 @@ def feedforward(epochs: int, train_loader, device: str, optimizer, use_amp: bool
             optimizer.zero_grad()
 
             with autocast(use_amp):
-                pred = CNNet(info)
+                pred = model(info)
                 loss = loss_fn(pred, lbl)
             scaler.scale(loss).backward()
             loss_item = loss.item()
@@ -86,10 +86,11 @@ def feedforward(epochs: int, train_loader, device: str, optimizer, use_amp: bool
             labels.append(lbl.cpu())
             results.append(pred.cpu())
 
-        # print(f"Epoch : {epoch + 1}")  # TODO: Раскоментить
-        # print(f"Loss : {loss_val / len(train_loader)}")  # TODO: Раскоментить
+        if flag:
+            print(f"Epoch : {epoch + 1}")
+            print(f"Loss : {loss_val / len(train_loader)}")
+            print(f"Acc : {acc_val / (len(train_loader) * batch_size)}")
         losses.append(loss_val / len(train_loader))
-        # print(f"Acc : {acc_val / (len(train_loader) * batch_size)}")  # TODO: Раскоментить
         accuracies.append(acc_val / (len(train_loader) * batch_size))
         if acc_val / (len(train_loader) * batch_size) > max_acc:
             max_acc = acc_val / (len(train_loader) * batch_size)
@@ -116,8 +117,8 @@ def feedforward(epochs: int, train_loader, device: str, optimizer, use_amp: bool
     file_name = curDate + "_" + lbl_from_conf + "_" + str(epochs) + "_" + device.upper() + ".pth"  # TODO: Раскоменьтить
     # file_name = lbl_from_conf + "_" + device.upper() + ".pth"  # TODO: Закоменьтить
     # print("\'" + file_name + "\'")  # TODO: Раскоменьтить можно
-    path_name = "models/no_additional/" + file_name
-    torch.save(CNNet.state_dict(), path_name)
+    path_name = "models/" + file_name
+    torch.save(model.state_dict(), path_name)
 
     h = np.linspace(1, len(losses), len(losses))
 
@@ -127,7 +128,7 @@ def feedforward(epochs: int, train_loader, device: str, optimizer, use_amp: bool
     ax.set_xlabel("Axis epoch")
     ax.set_ylabel("Axis loss")
     ax.grid()
-    plt.savefig(f'results/photo/no_additional/losses/{file_name.replace(".pth",".png")}')
+    plt.savefig(f'results/photo/losses/{file_name.replace(".pth",".png")}')
     # plt.show()
 
     fig, ax = plt.subplots(1, 1, figsize=(13, 9))
@@ -136,13 +137,13 @@ def feedforward(epochs: int, train_loader, device: str, optimizer, use_amp: bool
     ax.set_xlabel("Axis epoch")
     ax.set_ylabel("Axis accuracy")
     ax.grid()
-    plt.savefig(f'results/photo/no_additional/accuracy/{file_name.replace(".pth", ".png")}')
+    plt.savefig(f'results/photo/accuracy/{file_name.replace(".pth", ".png")}')
     # plt.show()
 
     # Здесь уже тест
 
     print("\nНачало тестирования")
-    feedforward_test(CNNet, loss_fn, epsilon, epochs, file_name)
+    feedforward_test(model, loss_fn, epsilon, epochs, file_name)
 
     return "\'" + file_name + "\'"
 
@@ -256,7 +257,7 @@ def additional_learning(start: int, stop: int, step: int, epochs: int, device: s
     file_name = curDate + "_" + lbl_from_conf + "_" + str(epochs) + "_" + device.upper() + ".pth"  # TODO: Раскоменьтить
     # file_name = lbl_from_conf + "_" + device.upper() + ".pth"  # TODO: Закоменьтить
     # print("\'" + file_name + "\'")  # TODO: Раскоменьтить можно
-    path_name = "models/additional/" + file_name
+    path_name = "models/" + file_name
     torch.save(CNNet.state_dict(), path_name)
 
     print("\nНачало тестирования")

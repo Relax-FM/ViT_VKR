@@ -1,7 +1,7 @@
 from torch.utils.data import Dataset
 
 class PreDataLoader(Dataset):
-    def __init__(self, data, candle_count=50, start=200, stop=350, normalization_pred=True, vers=1, lbl=1):
+    def __init__(self, data, candle_count=50, start=200, stop=450, normalization_pred=True, vers=1, lbl=1, candle_in_patch=1):
         """Create DataLoader for your DataSet
             :Parameters:
                 tickers : str, list
@@ -29,6 +29,7 @@ class PreDataLoader(Dataset):
         self.batches = []
         self.version = vers
         self.lbl = lbl
+        self.candle_in_patch = candle_in_patch
         self.create_exit_data()
 
 
@@ -45,6 +46,7 @@ class PreDataLoader(Dataset):
             low = []
             ema = []
             assets = []
+            candles = []
 
             for j in range(self.candle_count):
                 high.append(self.data.High[i-self.candle_count+j])
@@ -55,12 +57,6 @@ class PreDataLoader(Dataset):
 
             if self.version == 2:
                 assets.append(self.data.Assets[i-1])
-
-
-            # print(len(high))
-            # print(len(low))
-            # print(len(ema))
-            # print(len(assets))
 
             if (self.normalization_pred == True):
                 max0 = max(high)
@@ -75,10 +71,23 @@ class PreDataLoader(Dataset):
                     low[itr] = (low[itr]-rmin)/(rmax-rmin)
                     ema[itr] = (ema[itr]-rmin)/(rmax-rmin)
 
-            prediction.append(high)
-            prediction.append(low)
-            prediction.append(ema)
-            prediction.append(assets)
+            # Сюда вписать кодину бьющую окно по свечам
+
+            for candle_iter in range(self.candle_count):
+                candle = []
+                candle.append(high[candle_iter])
+                candle.append(low[candle_iter])
+                candle.append(ema[candle_iter])
+                candle.append(assets[candle_iter])
+                candles.append(candle)
+
+            # TODO: Тут если что дописать код для битья на патчи по несколько свечей
+
+            # prediction.append(high)
+            # prediction.append(low)
+            # prediction.append(ema)
+            # prediction.append(assets)
+            # prediction.append(candles)
 
             if self.lbl == 1:
                 label.append(self.data.Take_profit[i - 1])
@@ -88,11 +97,12 @@ class PreDataLoader(Dataset):
             elif self.lbl == 3:
                 label.append(self.data.Stop_loss[i - 1])
 
-            self.predictions.append(prediction)
+            self.predictions.append(candles)
             self.labels.append(label)
 
         self.batches.append(self.predictions)
         self.batches.append(self.labels)
+
         # print(self.predictions)
         # print('#'*30)
         # print(self.labels)
