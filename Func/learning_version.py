@@ -86,10 +86,11 @@ def feedforward(epochs: int, train_loader, device: str, optimizer, use_amp: bool
             labels.append(lbl.cpu())
             results.append(pred.cpu())
 
-        if flag:
-            print(f"Epoch : {epoch + 1}")
-            print(f"Loss : {loss_val / len(train_loader)}")
-            print(f"Acc : {acc_val / (len(train_loader) * batch_size)}")
+        # if flag:
+            # print(f"Epoch : {epoch + 1}")
+            # print(f"Loss : {loss_val / len(train_loader)}")
+            # print(f"Acc : {acc_val / (len(train_loader) * batch_size)}")
+
         losses.append(loss_val / len(train_loader))
         accuracies.append(acc_val / (len(train_loader) * batch_size))
         if acc_val / (len(train_loader) * batch_size) > max_acc:
@@ -284,6 +285,7 @@ def additional_learning(start: int, stop: int, step: int, epochs: int, device: s
     ax.set_title(f'Тест - {epochs} эпох', fontsize=20)
     ax.legend()
     ax.grid(True)
-    plt.savefig(f'results/photo/additional/test/{file_name.replace(".pth", ".png")}')
+    file_name = file_name.replace(".pth", "_additional.png")
+    plt.savefig(f'results/photo/test/{file_name}')
 
     return "\'" + file_name + "\'"

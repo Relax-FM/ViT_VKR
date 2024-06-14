@@ -63,7 +63,3 @@ def feedforward_test(model, loss_fn, epsilon, train_epochs, file_name):
     ax.grid(True)
     plt.savefig(f'results/photo/test/{file_name.replace(".pth", ".png")}')
     # plt.show()
-
-
-def additional_learning_test():
-    pass

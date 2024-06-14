@@ -24,7 +24,7 @@ class Dataloader():
         self.data = load_data(data_path, EMA_N).data  # Получили все строчки из экселя
         # Прилетают они в формате серий (всегда можно узнать дату и значение)
 
-    def get_dataloader(self, start: int | None = None, stop: int | None = None, test: bool = False) -> torch.utils.data.DataLoader:
+    def get_dataloader(self, start: int | None = None, stop: int | None = None, additional: bool = False, test: bool = False) -> torch.utils.data.DataLoader:
         """
 
         Метод создает даталоадер с нужными настройками.\n
@@ -32,11 +32,14 @@ class Dataloader():
 
         :param start: С какой позиции
         :param stop: По какую позицию
+        :param additional: Дообучение (Да/Нет)
         :param test: Валидация (Да/Нет)
         :return: loader: Возвращает даталоадер
         """
 
         loader_options = self.dataset_options.get('train_loader')
+        if additional is True:
+            loader_options = self.dataset_options.get('additional_loader')
         if test is True:
             loader_options = self.dataset_options.get('test_loader')
 
@@ -49,7 +52,7 @@ class Dataloader():
                             start=start, stop=stop,
                             normalization_pred=self.dataset_options.get('normalization'),
                             vers=self.dataset_options.get('vers'),
-                            lbl=get_label(self.dataset_options.get('label'), False if test else True))  # Получаем два списка
+                            lbl=get_label(self.dataset_options.get('label'), False if test or additional else True))  # Получаем два списка
         # В первом списке - входные данные, во втором - label данные
         # High, Low, EMA, Assets [2, [200, [4, 50]]]          2 - predict label      200 - размер ДС      4 - кол-во параметров у свечи              50 - свечей
         # [i, [4, 50]]
